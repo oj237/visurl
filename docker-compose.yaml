@@ -1,0 +1,32 @@
+version: '3'
+
+networks:
+    net:
+        driver: bridge
+
+volumes:
+    store:
+        driver: local
+
+services:
+    db:
+        container_name: vi-surl-db
+        image: mongo
+        restart: always
+        networks:
+            - net
+        volumes:
+            - store:/data/db
+        ports:
+            - 27017:27017
+            
+    dataproc:
+        container_name: vi-surl-dataproc
+        image: redis
+        restart: always
+        networks:
+            - net
+        volumes:
+            - store:/data/dataproc
+        ports:
+            - 6379:6379

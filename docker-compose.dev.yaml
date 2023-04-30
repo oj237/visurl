@@ -1,0 +1,164 @@
+version: '3'
+
+networks:
+    net:
+        driver: bridge
+
+volumes:
+    store:
+        driver: local
+
+services:
+    api_gateway: 
+        container_name: vi-surl-api-gateway
+        image: visurl/api_gateway
+        build:
+            dockerfile: ./Dockerfile
+            context: .
+        command: node dist/apps/api-gateway/main.js
+        depends_on:
+            - shrinker
+            - unshrinker
+            - account
+        working_dir: /app
+        volumes:
+            - ./:/app
+        networks:
+            - net
+        ports:
+            - 4201:5000
+        environment:
+            DOMAIN: 'https://n42.company'
+            SHRINKER_HOST: shrinker
+            SHRINKER_PORT: 8080
+            UNSHRINKER_HOST: unshrinker
+            UNSHRINKER_PORT: 8081
+            ACCOUNT_HOST: account
+            ACCOUNT_PORT: 8082
+
+    shrinker: 
+        image: visurl/shrinker
+        build:
+            dockerfile: ./Dockerfile
+            context: .
+        command: node dist/apps/shrinker/main.js
+        deploy:
+            mode: replicated
+            replicas: 1
+            endpoint_mode: vip
+        restart: always
+        depends_on:
+            - db
+            - dataproc
+        working_dir: /app
+        volumes:
+            - ./:/app
+        networks:
+            - net
+        expose:
+            - 8080
+        environment:
+            DB_HOST: db
+            DB_PORT: 27017
+            DB_NAME: 'visurl'
+            REDIS_HOST: dataproc
+            REDIS_PORT: 6379
+    
+    unshrinker: 
+        image: visurl/unshrinker
+        build:
+            dockerfile: ./Dockerfile
+            context: .
+        command: node dist/apps/unshrinker/main.js
+        deploy:
+            mode: replicated
+            replicas: 2
+            endpoint_mode: vip
+        restart: always
+        depends_on:
+            - db
+            - dataproc
+        working_dir: /app
+        volumes:
+            - ./:/app
+        networks:
+            - net
+        expose:
+            - 8081
+        environment:
+            DB_HOST: db
+            DB_PORT: 27017
+            DB_NAME: 'visurl'
+            REDIS_HOST: dataproc
+            REDIS_PORT: 6379
+    
+    account: 
+        image: visurl/account
+        build:
+            dockerfile: ./Dockerfile
+            context: .
+        command: node dist/apps/account/main.js
+        deploy:
+            mode: replicated
+            replicas: 1
+            endpoint_mode: vip
+        restart: always
+        depends_on:
+            - db
+            - dataproc
+        working_dir: /app
+        volumes:
+            - ./:/app
+        networks:
+            - net
+        expose:
+            - 8082
+        environment:
+            DB_HOST: db
+            DB_PORT: 27017
+            DB_NAME: 'visurl'
+            REDIS_HOST: dataproc
+            REDIS_PORT: 6379
+    
+    webui: 
+        image: visurl/account
+        build:
+            dockerfile: ./Dockerfile
+            context: .
+        command: node dist/apps/account/main.js
+        deploy:
+            mode: replicated
+            replicas: 1
+            endpoint_mode: vip
+        restart: always
+        depends_on:
+            - api_gateway
+        working_dir: /app
+        volumes:
+            - ./:/app
+        networks:
+            - net
+        ports:
+            - 4200:4200
+            
+    db:
+        container_name: vi-surl-db
+        image: mongo
+        restart: always
+        networks:
+            - net
+        volumes:
+            - store:/data/db
+        ports:
+            - 27017:27017
+            
+    dataproc:
+        container_name: vi-surl-dataproc
+        image: redis
+        restart: always
+        networks:
+            - net
+        volumes:
+            - store:/data/dataproc
+        ports:
+            - 6379:6379

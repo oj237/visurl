@@ -1,0 +1,68 @@
+{
+  "name": "shrinker",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/shrinker/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/shrinker",
+        "main": "apps/shrinker/src/main.ts",
+        "tsConfig": "apps/shrinker/tsconfig.app.json",
+        "assets": ["apps/shrinker/src/assets"],
+        "isolatedConfig": true,
+        "webpackConfig": "apps/shrinker/webpack.config.js"
+      },
+      "configurations": {
+        "development": {},
+        "production": {}
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "shrinker:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "shrinker:build:development"
+        },
+        "production": {
+          "buildTarget": "shrinker:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/shrinker/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/shrinker/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
+      }
+    },
+    "docker-build": {
+      "dependsOn": ["build"],
+      "command": "docker build -f apps/shrinker/Dockerfile . -t shrinker"
+    }
+  },
+  "tags": []
+}
