@@ -3,6 +3,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
 import { AppService } from '../app.service';
 
+const RE = /^(http(s):\/\/.)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$/g
+
 class Widget {
   url: string = '';
   visurl: string = '';
@@ -38,7 +40,7 @@ export class HomeComponent {
     this.widget$ = new BehaviorSubject<boolean>(false);
 
     this.vi = this.fb.group({
-      'url': ['', Validators.compose([Validators.required, Validators.pattern(/^(http(s):\/\/.)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$/g)])]
+      'url': ['', Validators.compose([Validators.required])]
     });
 
     this.widget = new Widget();
